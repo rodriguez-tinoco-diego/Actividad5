@@ -1,6 +1,7 @@
+
 import java.util.Objects;
 
-public class Observacion implements Comparable<Observacion> {
+public class Observacion {
     private String idObservacion;
     private String periodo;
     private double latitud;
@@ -10,7 +11,8 @@ public class Observacion implements Comparable<Observacion> {
 
     public Observacion(String idObservacion, String periodo,
                        double latitud, DireccionLat direccionLat,
-                       double longitud, DireccionLong direccionLong) {
+                       double longitud, DireccionLong direccionLong)
+            throws LatitudInvalidaException, LongitudInvalidaException, PeriodoInvalidoException {
         this.idObservacion = idObservacion;
         setPeriodo(periodo);
         setLatitud(latitud);
@@ -21,43 +23,50 @@ public class Observacion implements Comparable<Observacion> {
 
 
     public String getIdObservacion() { return idObservacion; }
+
     public String getPeriodo() { return periodo; }
-    public double getLatitud() { return latitud; }
-    public DireccionLat getDireccionLat() { return direccionLat; }
-    public double getLongitud() { return longitud; }
-    public DireccionLong getDireccionLong() { return direccionLong; }
-
-
-    public void setPeriodo(String periodo) {
+    public void setPeriodo(String periodo) throws PeriodoInvalidoException {
         if (periodo == null || periodo.trim().isEmpty())
-            throw new IllegalArgumentException("El periodo no puede estar vacío.");
+            throw new PeriodoInvalidoException("El periodo no puede estar vacío.");
+
+        String[] mesesValidos = {"enero","febrero","marzo","abril","mayo","junio",
+                "julio","agosto","septiembre","octubre","noviembre","diciembre"};
+        String periodoLower = periodo.toLowerCase();
+        boolean valido = false;
+        for (String mes : mesesValidos) {
+            if (periodoLower.contains(mes)) {
+                valido = true;
+                break;
+            }
+        }
+        if (!valido)
+            throw new PeriodoInvalidoException("El periodo debe contener un nombre de mes válido: " + periodo);
         this.periodo = periodo;
     }
 
-    public void setLatitud(double latitud) {
+    public double getLatitud() { return latitud; }
+    public void setLatitud(double latitud) throws LatitudInvalidaException {
         if (latitud < 0 || latitud > 90)
-            throw new IllegalArgumentException("Latitud debe estar entre 0 y 90 grados.");
+            throw new LatitudInvalidaException("Latitud debe estar entre 0 y 90 grados (valor absoluto).");
         this.latitud = latitud;
     }
 
+    public DireccionLat getDireccionLat() { return direccionLat; }
     public void setDireccionLat(DireccionLat direccionLat) {
-        if (direccionLat == null)
-            throw new IllegalArgumentException("Dirección de latitud no puede ser nula.");
         this.direccionLat = direccionLat;
     }
 
-    public void setLongitud(double longitud) {
+    public double getLongitud() { return longitud; }
+    public void setLongitud(double longitud) throws LongitudInvalidaException {
         if (longitud < 0 || longitud > 180)
-            throw new IllegalArgumentException("Longitud debe estar entre 0 y 180 grados.");
+            throw new LongitudInvalidaException("Longitud debe estar entre 0 y 180 grados.");
         this.longitud = longitud;
     }
 
+    public DireccionLong getDireccionLong() { return direccionLong; }
     public void setDireccionLong(DireccionLong direccionLong) {
-        if (direccionLong == null)
-            throw new IllegalArgumentException("Dirección de longitud no puede ser nula.");
         this.direccionLong = direccionLong;
     }
-
 
     public double getLatitudConSigno() {
         return (direccionLat == DireccionLat.NORTE) ? latitud : -latitud;
@@ -66,7 +75,6 @@ public class Observacion implements Comparable<Observacion> {
     public double getLongitudConSigno() {
         return (direccionLong == DireccionLong.ESTE) ? longitud : -longitud;
     }
-
 
     @Override
     public boolean equals(Object o) {
@@ -81,15 +89,9 @@ public class Observacion implements Comparable<Observacion> {
         return Objects.hash(idObservacion);
     }
 
-
-    @Override
-    public int compareTo(Observacion otra) {
-        return this.periodo.compareTo(otra.periodo);
-    }
-
     @Override
     public String toString() {
-        return String.format("Observacion{id='%s', periodo='%s', lat=%.2f° %s, lon=%.2f° %s}",
+        return String.format("Observacion{id='%s', periodo='%s', pos=(%.2f°%s, %.2f°%s)}",
                 idObservacion, periodo, latitud, direccionLat, longitud, direccionLong);
     }
 }
