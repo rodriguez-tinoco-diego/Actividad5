@@ -1,0 +1,5 @@
+C001|Alfa Centauri|4.37|años luz|GASES,SOLIDOS
+C002|Betelgeuse|642.5|años luz|GASES
+C003|Sirio|8.6|años luz|GASES,SOLIDOS,LIQUIDOS
+C004|Proxima Centauri|4.24|años luz|GASES,SOLIDOS
+C005|Andromeda|2537000|años luz|GASES

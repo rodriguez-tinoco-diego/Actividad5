@@ -9,6 +9,7 @@ public class Observacion {
     private double longitud;
     private DireccionLong direccionLong;
 
+
     public Observacion(String idObservacion, String periodo,
                        double latitud, DireccionLat direccionLat,
                        double longitud, DireccionLong direccionLong)
@@ -23,7 +24,6 @@ public class Observacion {
 
 
     public String getIdObservacion() { return idObservacion; }
-
     public String getPeriodo() { return periodo; }
     public void setPeriodo(String periodo) throws PeriodoInvalidoException {
         if (periodo == null || periodo.trim().isEmpty())
@@ -31,62 +31,56 @@ public class Observacion {
 
         String[] mesesValidos = {"enero","febrero","marzo","abril","mayo","junio",
                 "julio","agosto","septiembre","octubre","noviembre","diciembre"};
-        String periodoLower = periodo.toLowerCase();
-        boolean valido = false;
-        for (String mes : mesesValidos) {
-            if (periodoLower.contains(mes)) {
-                valido = true;
-                break;
-            }
-        }
-        if (!valido)
-            throw new PeriodoInvalidoException("El periodo debe contener un nombre de mes válido: " + periodo);
+        boolean ok = false;
+        for (String m : mesesValidos)
+            if (periodo.toLowerCase().contains(m)) { ok = true; break; }
+        if (!ok) throw new PeriodoInvalidoException("Mes no reconocido: " + periodo);
         this.periodo = periodo;
     }
-
     public double getLatitud() { return latitud; }
     public void setLatitud(double latitud) throws LatitudInvalidaException {
         if (latitud < 0 || latitud > 90)
-            throw new LatitudInvalidaException("Latitud debe estar entre 0 y 90 grados (valor absoluto).");
+            throw new LatitudInvalidaException("Latitud entre 0 y 90 grados.");
         this.latitud = latitud;
     }
-
     public DireccionLat getDireccionLat() { return direccionLat; }
-    public void setDireccionLat(DireccionLat direccionLat) {
-        this.direccionLat = direccionLat;
-    }
-
+    public void setDireccionLat(DireccionLat direccionLat) { this.direccionLat = direccionLat; }
     public double getLongitud() { return longitud; }
     public void setLongitud(double longitud) throws LongitudInvalidaException {
         if (longitud < 0 || longitud > 180)
-            throw new LongitudInvalidaException("Longitud debe estar entre 0 y 180 grados.");
+            throw new LongitudInvalidaException("Longitud entre 0 y 180 grados.");
         this.longitud = longitud;
     }
-
     public DireccionLong getDireccionLong() { return direccionLong; }
-    public void setDireccionLong(DireccionLong direccionLong) {
-        this.direccionLong = direccionLong;
-    }
+    public void setDireccionLong(DireccionLong direccionLong) { this.direccionLong = direccionLong; }
 
     public double getLatitudConSigno() {
         return (direccionLat == DireccionLat.NORTE) ? latitud : -latitud;
     }
-
     public double getLongitudConSigno() {
         return (direccionLong == DireccionLong.ESTE) ? longitud : -longitud;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Observacion that = (Observacion) o;
-        return Objects.equals(idObservacion, that.idObservacion);
+
+    public String toLinea() {
+        return idObservacion + "|" +
+                (periodo != null ? periodo : "") + "|" +
+                latitud + "|" + direccionLat.name() + "|" +
+                longitud + "|" + direccionLong.name();
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(idObservacion);
+
+    public static Observacion fromLinea(String linea)
+            throws LatitudInvalidaException, LongitudInvalidaException, PeriodoInvalidoException {
+        String[] partes = linea.split("\\|");
+        if (partes.length != 6) throw new IllegalArgumentException("Formato incorrecto en observación");
+        String id = partes[0];
+        String periodo = partes[1];
+        double lat = Double.parseDouble(partes[2]);
+        DireccionLat dirLat = DireccionLat.valueOf(partes[3]);
+        double lon = Double.parseDouble(partes[4]);
+        DireccionLong dirLon = DireccionLong.valueOf(partes[5]);
+        return new Observacion(id, periodo, lat, dirLat, lon, dirLon);
     }
 
     @Override

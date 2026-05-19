@@ -28,80 +28,64 @@ public class CuerpoCeleste {
     public String getIdCuerpo() { return idCuerpo; }
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
-
     public double getDistancia() { return distancia; }
     public void setDistancia(double distancia) throws DistanciaInvalidaException {
-        if (distancia <= 0)
-            throw new DistanciaInvalidaException("La distancia debe ser positiva.");
+        if (distancia <= 0) throw new DistanciaInvalidaException("Distancia positiva");
         this.distancia = distancia;
     }
-
     public String getUnidadDistancia() { return unidadDistancia; }
-    public void setUnidadDistancia(String unidadDistancia) throws UnidadDistanciaInvalidaException {
-        if (!"años luz".equals(unidadDistancia) && !"km/seg".equals(unidadDistancia))
-            throw new UnidadDistanciaInvalidaException("Unidad debe ser 'años luz' o 'km/seg'.");
-        this.unidadDistancia = unidadDistancia;
+    public void setUnidadDistancia(String unidad) throws UnidadDistanciaInvalidaException {
+        if (!"años luz".equals(unidad) && !"km/seg".equals(unidad))
+            throw new UnidadDistanciaInvalidaException("Unidad inválida");
+        this.unidadDistancia = unidad;
+    }
+    public List<TipoComposicion> getComposicion() { return Collections.unmodifiableList(composicion); }
+    public void setComposicion(List<TipoComposicion> comp) { this.composicion = (comp!=null)?comp:new ArrayList<>(); }
+
+    public List<Observacion> getObservaciones() { return Collections.unmodifiableList(observaciones); }
+    public void agregarObservacion(Observacion obs) {
+        if (obs == null) throw new IllegalArgumentException("Observación nula");
+        observaciones.add(obs);
+    }
+    public boolean eliminarObservacion(String idObs) {
+        return observaciones.removeIf(o -> o.getIdObservacion().equals(idObs));
     }
 
-    public List<TipoComposicion> getComposicion() {
-        return Collections.unmodifiableList(composicion);
-    }
-    public void setComposicion(List<TipoComposicion> composicion) {
-        this.composicion = (composicion != null) ? composicion : new ArrayList<>();
-    }
 
+    public String toLinea() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(idCuerpo).append("|")
+                .append(nombre).append("|")
+                .append(distancia).append("|")
+                .append(unidadDistancia).append("|");
 
-    public void agregarObservacion(Observacion observacion) {
-        if (observacion == null)
-            throw new IllegalArgumentException("Observación no puede ser nula.");
-        for (Observacion o : observaciones) {
-            if (o.getIdObservacion().equals(observacion.getIdObservacion()))
-                throw new IllegalArgumentException("Ya existe observación con ese ID.");
+        for (int i = 0; i < composicion.size(); i++) {
+            if (i > 0) sb.append(",");
+            sb.append(composicion.get(i).name());
         }
-        observaciones.add(observacion);
-    }
-
-    public boolean eliminarObservacion(String idObservacion) {
-        return observaciones.removeIf(o -> o.getIdObservacion().equals(idObservacion));
-    }
-
-    public List<Observacion> getObservaciones() {
-        return Collections.unmodifiableList(observaciones);
+        return sb.toString();
     }
 
 
-    public String calcularDesplazamiento(String periodo1, String periodo2) {
-        Observacion obs1 = null, obs2 = null;
-        for (Observacion o : observaciones) {
-            if (o.getPeriodo().equalsIgnoreCase(periodo1)) obs1 = o;
-            if (o.getPeriodo().equalsIgnoreCase(periodo2)) obs2 = o;
+    public static CuerpoCeleste fromLinea(String linea)
+            throws DistanciaInvalidaException, UnidadDistanciaInvalidaException {
+        String[] partes = linea.split("\\|");
+        if (partes.length != 5) throw new IllegalArgumentException("Formato incorrecto en cuerpo");
+        String id = partes[0];
+        String nombre = partes[1];
+        double distancia = Double.parseDouble(partes[2]);
+        String unidad = partes[3];
+        List<TipoComposicion> comps = new ArrayList<>();
+        if (!partes[4].isEmpty()) {
+            String[] compsStr = partes[4].split(",");
+            for (String c : compsStr) comps.add(TipoComposicion.valueOf(c));
         }
-        if (obs1 == null || obs2 == null)
-            return "No se encontraron observaciones para uno o ambos periodos.";
-
-        double difLat = obs2.getLatitudConSigno() - obs1.getLatitudConSigno();
-        double difLon = obs2.getLongitudConSigno() - obs1.getLongitudConSigno();
-        return String.format("Desplazamiento de %s a %s: ΔLat = %.2f°, ΔLon = %.2f°",
-                periodo1, periodo2, difLat, difLon);
-    }
-
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        CuerpoCeleste that = (CuerpoCeleste) o;
-        return Objects.equals(idCuerpo, that.idCuerpo);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(idCuerpo);
+        return new CuerpoCeleste(id, nombre, distancia, unidad, comps);
     }
 
     @Override
     public String toString() {
-        return String.format("CuerpoCeleste{id='%s', nombre='%s', distancia=%.2f %s, obs=%d}",
-                idCuerpo, nombre, distancia, unidadDistancia, observaciones.size());
+        return String.format("CuerpoCeleste{id='%s', nombre='%s', distancia=%.2f %s}",
+                idCuerpo, nombre, distancia, unidadDistancia);
     }
 }
